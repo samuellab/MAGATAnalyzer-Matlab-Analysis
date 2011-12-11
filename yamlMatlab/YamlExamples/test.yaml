@@ -1,0 +1,10 @@
+Enterprise:
+ name : umfty dumf
+ description : production of..
+ location : [ Olomouc , Brno, 12]
+ matice :     
+    zapis2: 2
+Process:
+    name: umfty_dumf_process
+    Description_umfty: Temperature of heating water     
+    predictionHorizon: 142:00:00

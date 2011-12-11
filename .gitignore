@@ -1,0 +1,13 @@
+*.mat
+*.asv
+*.lnk
+*.xls
+*.jpg
+*.bin
+*.exe
+*.bmp
+*.fig
+*.avi
+*.m~
+*.ps
+documentation/

@@ -1,0 +1,34 @@
+files to process:
+  -
+    file stub: no file stub specified
+    output file: no output file specified
+    processing params:
+      fstub: no fstub
+      extension: mmf
+      padding: 0
+      outputname: no outputname
+      headerinfoname: no headername
+      logName: no logname
+      verbosity level: 2
+      startFrame: 0
+      endFrame: -1
+      analysis rectangle:
+        - 0
+        - 0
+        - -1
+        - -1
+      minArea: 5
+      maxArea: 2000
+      overallThreshold: 30
+      winSize: 50
+      nBackgroundFrames: 5
+      background_resampleInterval: 200
+      background_blur_sigma: 0
+      thresholdScaleImage: ""
+      blurThresholdIm_sigma: 10
+      frame normalization method: 0
+      imStackLength: 0
+      maxExtractDist: 15
+      showExtraction: true
+      max maggot contour angle: 1.5708
+default processing params: ~

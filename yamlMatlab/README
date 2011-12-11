@@ -1,0 +1,45 @@
+                  YAMLMatlab 
+                    v0.1                  
+                 ============
+
+About:
+YAMLMatlab is a set of Matlab functions enabling reading in and writing out
+documents in YAML format. The hierarchical structure of a YAML file is 
+represented as a Matlab struct. 
+
+Who:
+This program was developed and is being maintained by Energocentrum
+PLUS, s.r.o. and Czech Technical University (CTU) in Prague. One can 
+redistribute the program under terms of MIT license. Full text of the
+license is included in the program release.
+		
+Main author are:
+ - Jiri Cigler, Dept. of Control Engineering, CTU Prague
+ - Jan  Siroky, Energocentrum PLUS s.r.o.
+
+
+
+- Release 0.1 (2/03/2011) :
+    Features: 
+        - Reading in and writing out a yaml file. 
+        - Available data types are:
+            - Date (00:11:12)
+            - Strings
+            - Int/Double
+            - Array of strings of size 1xN or Nx1
+            - Matrices of arbitrary size
+        - Introduced "description file" containing key-word "import" standing for
+          files which are to be processed together e.g.
+            ---
+            import: 
+                - test1.yaml
+                - test2.yaml
+            ...
+           stands for situation when the program reads two yaml files together
+           into one struct
+
+    
+Installation:
+    - just add the codes and all subfolders to matlab path by
+        >> addpath(genpath('path to codes'))
+        
