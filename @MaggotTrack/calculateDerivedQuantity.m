@@ -394,7 +394,6 @@ function calculateSpineCurv(track)
      v = v(2:end-1,:,:);
      cv = mean((v(:,1,:).*a(:,2,:)) - (v(:,2,:).*a(:,1,:))./(sum(v.^2, 2)).^1.5);
      track.dq.spineCurv = squeeze(cv)';
-     track.dq.spineTheta = track.dq.spineLength.*track.dq.spineCurv;
 end
 
 function calculateSpineTheta(track)
