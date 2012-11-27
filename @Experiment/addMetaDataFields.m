@@ -12,12 +12,12 @@ end
 
 existsAndDefault('timfname', expt.timfname);
 
-header = {'GAS_CH1_SP',  'co2filt_0', 'co2filt_1', 'PID_PPM', 'LED_ON', 'LUM_PWM_AMP'};
-timheader = {'GAS_CH1_SP_time', 'co2fast_0_time', 'co2fast_1_time', 'PID_PPM_time', 'LED_ON_time', 'LUM_PWM_AMP_time'};
-gname = {'gassp', 'co2ppm0', 'co2ppm1', 'vocppm', 'ledOn', 'ledAmp'};
-smoothTime = [0, 2, 2, 7, 0, 0];
-derivTime = [0.1, 1, 1, 1, 0, 0];
-isgas = [true, true, true, true, false, false];
+header = {'GAS_CH1_SP',  'co2filt_0', 'co2filt_1', 'PID_PPM', 'LED_ON', 'LUM_PWM_AMP', 'Temp_C_WS'};
+timheader = {'GAS_CH1_SP_time', 'co2fast_0_time', 'co2fast_1_time', 'PID_PPM_time', 'LED_ON_time', 'LUM_PWM_AMP_time','Temp_C_WS_time'};
+gname = {'gassp', 'co2ppm0', 'co2ppm1', 'vocppm', 'ledOn', 'ledAmp','temperature'};
+smoothTime = [0, 2, 2, 7, 0, 0,1];
+derivTime = [0.1, 1, 1, 1, 0, 0,1];
+isgas = [true, true, true, true, false, false,false];
 gasvel = 1.15; %changed from 1.5 by mhg 4/12
 gasdir = [1;0]; 
 gasorigin = [-29;0]; %change from -15 by mhg4/12

@@ -188,7 +188,15 @@ end
 sc.hsnum = eset.gatherSubField('headSwing', 'num');
 
 eti = eset.gatherField('eti');
+sc.eti = eti;
+sc.reo_eti = eset.gatherFromSubField('reorientation', 'eti', 'position', 'start');
+sc.hs_eti = eset.gatherFromSubField('headSwing', 'eti', 'position', 'start');
 
+% it = eset.gatherSubField('dr','interpTime');
+% sc.delta_t = median(it);
+% if (any(it ~= sc.delta_t))
+%     disp (['warning:  eset does not have homogenous interpolation times, instead range from ' num2str(min(it)) ' to ' num2str(max(it))]);
+% end
 %find the time with the most valid animals
 tx = min(eti(sc.valid)):30:max(eti(sc.valid));
 h = hist(eti, tx);
@@ -200,6 +208,11 @@ st = eset.evaluateTrackExpression('min(track.getDerivedQuantity(''eti''))');
 et = eset.evaluateTrackExpression('max(track.getDerivedQuantity(''eti''))');
 sc.spineLengths = sl(st <= tx(I) & et > tx(I) & et-st > 30);
 
+if (isfield(eset.expt(1).track(1).dq, 'temperature'))
+    sc.temperature = eset.gatherField('temperature');
+    sc.reo_temperature = eset.gatherFromSubField('reorientation', 'temperature', 'position', 'start');
+    sc.hs_temperature = eset.gatherFromSubField('headSwing', 'temperature', 'position', 'start');
+end
 
 
 % 

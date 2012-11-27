@@ -27,6 +27,7 @@ sno.confidenceLevel = 0.95;
 sno.autocorr_timerange = [];
 sno.runTimeBinSize = 10;
 sno.useInvalidHeadSweeps = false;
+sno.timeBinSizeForTemporalPlots = 15; %seconds
 
 if (nargin == 0)
     if (nargout >= 1)
@@ -488,6 +489,25 @@ for j = 1:length(fn)
     ad.(fn{j}) = yd(inds);
     ad.([fn{j} '_eb']) = eb(inds);
 end
-
+if (isfield(sc, 'eti'))
+    ad.time_axis = (min(sc.eti(sc.valid))+sno.timeBinSizeForTemporalPlots/2):sno.timeBinSizeForTemporalPlots:(max(sc.eti(sc.valid))-sno.timeBinSizeForTemporalPlots/2);
+    txedg = [ad.time_axis-sno.timeBinSizeForTemporalPlots/2 ad.time_axis(end)+sno.timeBinSizeForTemporalPlots/2];
+    [~,ad.speed_vs_time,se] = meanyvsx(sc.eti(sc.valid), sc.speed(sc.valid), txedg);
+    ad.speed_vs_time_eb = kappa*se;
+    
+    [~,ad.speed_inruns_vs_time,se] = meanyvsx(sc.eti(sc.valid&sc.isrun), sc.speed(sc.valid&sc.isrun), txedg);
+    ad.speed_inruns_vs_time_eb = kappa*se;
+    
+    h1 = histc(sc.reo_eti(sc.reovalid & sc.numhs >= 1), txedg);
+    h2 = histc(sc.eti(sc.valid), txedg);
+    
+    h2 = h2(1:end-1) * sc.interptime / 60;
+    h1 = h1(1:end-1);
+    ad.reo_vs_time = h1./h2;
+    ad.reo_vs_time_eb = sqrt(h1)./h2;
+    if (isfield(sc, 'temperature'))
+        [~,ad.temperature_vs_time] = meanyvsx(sc.eti(sc.valid), sc.temperature(sc.valid), txedg);
+    end
+end
 
 

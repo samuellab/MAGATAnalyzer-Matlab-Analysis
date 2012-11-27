@@ -82,6 +82,7 @@ save(fullfile(basedir, 'calculations', 'spatial_analysis.mat'), 'spatialCalculat
 
 simpleMetricFigure(analyzedData, 'CS Navigating 2ppm/cm EtAc', [],[],'fignum', 1);
 strategyMetricFigure(analyzedData,[], 'figureTitle', 'CS Navigating 2ppm/cm EtAc', 'fignum', 2);
+simpleTemporalFigures(analyzedData, [], 'figureTitle', 'CS Navigating 2ppm/cm EtAc', 'fignum', 3);
 
 % save the figures to disk as pdfs
 if (~exist(fullfile(basedir, 'figures'), 'dir'))
@@ -89,6 +90,7 @@ if (~exist(fullfile(basedir, 'figures'), 'dir'))
 end
 saveas(1, fullfile(basedir, 'figures', 'simpleMetrics.pdf'), 'pdf');
 saveas(2, fullfile(basedir, 'figures', 'strategyMetrics.pdf'), 'pdf');
+saveas(3, fullfile(basedir, 'figures', 'simpleTemporal.pdf'), 'pdf');
 
 % step 5
 
