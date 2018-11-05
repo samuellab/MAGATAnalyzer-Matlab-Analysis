@@ -14,10 +14,16 @@ function qvec = gatherFromSubField(eset, subfield, fieldname, varargin)
 inds = [];
 varargin = assignApplicable(varargin);
 qvec = [];
-for j = 1:length(eset.expt)
-    qvec = [qvec eset.expt(j).gatherFromSubField(subfield, fieldname, varargin{:})];
+if (strcmpi(fieldname, 'expNum'))
+    for j = 1:length(eset.expt)
+        qv{j} = j*ones(size(eset.expt(j).gatherFromSubField(subfield,'trackNum', varargin{:})));       
+    end    
+    qvec = [qv{:}];
+else
+    for j = 1:length(eset.expt)
+        qvec = [qvec eset.expt(j).gatherFromSubField(subfield, fieldname, varargin{:})];
+    end
 end
-
 if (~isempty(inds))
     qvec = qvec(:,inds);
 end

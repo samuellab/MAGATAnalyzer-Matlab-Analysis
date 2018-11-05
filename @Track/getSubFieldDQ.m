@@ -94,14 +94,14 @@ if (isempty(f))
     return;
 end
 
-if (isempty(varargin))
+%if (isempty(varargin))
     %if we don't need any additional computation or selection, then this is
     %fine
-    qvec = track.getDerivedQuantity(quantityName, false, [f.inds]);
-else
+ %   qvec = track.getDerivedQuantity(quantityName, false, [f.inds]);
+%else
     qvec = [];
     for j = 1:length(f)
         qvtemp = f(j).getDerivedQuantity(quantityName, varargin{:});
         qvec = [qvec qvtemp];            
     end
-end
+%end

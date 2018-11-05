@@ -10,7 +10,7 @@ function qvec = gatherFromSubField(expt, subfield, fieldname, varargin)
 
  qvec = [];
  for j = 1:length(expt.track)
-     qvec = [qvec expt.track(j).getSubFieldDQ(subfield, fieldname, false, varargin{:})];
+     qvec = [qvec expt.track(j).getSubFieldDQ(subfield, fieldname, varargin{:})]; %removed false between fieldname and varargin
      %{
      if (isempty(qvec))
          break;

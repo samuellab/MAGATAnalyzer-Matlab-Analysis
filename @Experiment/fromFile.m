@@ -1,10 +1,11 @@
-function af = fromFile (fname, timfname, loadContour, camcalinfo, minTrackLength)
+function [af, valid] = fromFile (fname, timfname, loadContour, camcalinfo, minTrackLength)
 %loads an experiment from a bin file
-%expt = fromFile (fname, timfname, loadContour, camcalinfo, minTrackLength)
+%[expt, valid] = fromFile (fname, timfname, loadContour, camcalinfo, minTrackLength)
 %this is a static method of the Experiment class (Experiment.fromFile)
 %
 %outputs: 
 %EXPT, a member of the experiment class
+%VALID, whether the experiment loaded without errors
 %inputs:
 %FNAME: name of .bin file to load
 %TIMFNAME: timining information file (.tim);
@@ -16,6 +17,18 @@ function af = fromFile (fname, timfname, loadContour, camcalinfo, minTrackLength
 %MINTRACKLENGTH: minimum length of a track (in points) to load from disk
 %   default: 1
 tic
+
+if (~iscell(fname))
+    [~,~,ext] = fileparts(fname);
+    if strcmpi (ext, '.jav')
+        [af, valid] = fromJava([], fname, timfname, loadContour, camcalinfo, minTrackLength);
+        return;
+    end
+end
+
+try 
+        
+valid = true;
 if (~exist ('loadContour', 'var') || isempty ('loadContour'))
     loadContour = true;
 end
@@ -40,6 +53,7 @@ end
 
 if (strcmpi (ext, '.blob') || strcmpi (ext, '.blobs'))
     af.track = MWTTrack.fromFile(fname, camcalinfo);
+    
     return;
 end
 if (iscell(fname))
@@ -67,8 +81,14 @@ switch (bitshift(code, -16))
         ptType = MaggotTrackPoint();
         af.so = MaggotSegmentOptions();
     otherwise
-      disp('invalid code: I don''t know what kind of point I''m loading');
-      return
+        disp('invalid code: I don''t know what kind of point I''m loading');
+        af = repmat(af, 0);
+        valid = false;
+        [ppp, fff] = fileparts(fname);
+        fidd = fopen(fullfile(ppp, [fff '.bad']),'wt');
+        fprintf(fidd, 'invalid code: I don''t know what kind of point I''m loading\n');
+        fclose(fidd);
+        return
 end  
 
 
@@ -123,3 +143,14 @@ catch me
     disp(me.getReport());
 end
 toc(ts)
+
+catch me
+    %af = repmat(af, 0);
+    valid = false;
+    [ppp, fff] = fileparts(fname);
+    fidd = fopen(fullfile(ppp, [fff '.bad']),'wt');
+    fprintf(fidd, me.getReport());
+    fclose(fidd);
+    rethrow(me);
+end
+    

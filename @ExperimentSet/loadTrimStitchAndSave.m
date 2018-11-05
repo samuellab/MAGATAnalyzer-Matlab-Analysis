@@ -8,14 +8,22 @@ function eset = loadTrimStitchAndSave(basedir, esetname, ecl, camcalinfo, vararg
 %                    tracks
 %          trimrect - rectangle outside of which to remove points 
 %          buffer - if trimrect is unspecified, distance from edge of analysis rectangle to trim
+%          prunebuffer - if prunebuffer is specified, distance from edge of
+%                        trimrectangle to prune tracks (remove all that start outside this edge) 
+%                        NOTE: this distance is applied to the trimrectangle 
 %          default_deltaT - if loading timing fails, what is the default
 %                           time interval between frames?
 %          checker_calc - if this was a checkerboard experiment, you can add checker data here
 %          timerange - remove points outside this time window (usually this is left empty)
 %          fieldsToDerive - additional fields to derive before saving
 %                       (e.g. 'periAmp')
+%          setDRByPeristalsis - whether to automatically set derivation
+%               rules by using automatically detected peristalsis frequency
+%           isMWT, true/[false] -- if this is an MWT experiment
 
 
+
+%Set params
 minpts = 50;
 frameDiff = 2; % stitch together tracks if first ended 2 or fewer frames before second started
 if (isempty(camcalinfo))
@@ -23,6 +31,7 @@ if (isempty(camcalinfo))
 else
     maxDist = 0.1; %one mm
 end
+prunebuffer = [];
 buffer = [];
 trimrect = [];
 default_deltaT = 0.2;
@@ -30,6 +39,8 @@ default_deltaT = 0.2;
 checker_calc = [];
 timerange = [];
 fieldsToDerive = {};
+setDRByPeristalsis = false;
+isMWT = false;
 varargin = assignApplicable(varargin);
 eclexisted = existsAndDefault('ecl', ESetCleaner());
 existsAndDefault('camcalinfo', []);
@@ -44,10 +55,34 @@ end
 eclnukespots.askFirst = false;
 ts1 = tic;
 
-eset = ExperimentSet.fromFiles(basedir, 'minpts', minpts, 'camcalinfo', camcalinfo, 'parallel', true, varargin{:});
-eset.addTimingByFrameDifference(default_deltaT);
-    
+%LOAD the experiments
+if (isMWT)
+    eset = ExperimentSet.fromMWTFiles(basedir, camcalinfo, varargin{:});
+else
+    eset = ExperimentSet.fromFiles(basedir, 'minpts', minpts, 'camcalinfo', camcalinfo, 'parallel', true, varargin{:});
+end
+
+%Optionally, generate derivation rules using properties of the track
+if (setDRByPeristalsis)
+    try
+        eset.setDerivationRulesByPeristalsisFrequency;
+    catch me
+        disp(me.getReport());
+        disp ('failed to set derivation rules; aborting now and returning so you still have eset');
+        return;
+    end     
+end
+
+%Add timing info (if it's not already there)
+% note: in ExperimentSet.fromFiles, timing info is NOT there by default 
+if (~isMWT)
+    eset.addTimingByFrameDifference(default_deltaT);
+end
+
+%CLEAN the funky-looking tracks out of the eset
 eclnukespots.clean(eset);
+
+%Set some ecl field values
 if (~eclexisted ) 
     if (~isempty(camcalinfo))
     %real units, assume cm
@@ -60,11 +95,18 @@ if (~eclexisted )
     ecl.minPts = ceil(30 / eset.expt(1).dr.interpTime);
 end
 
+%STITCH appropriate tracks together
 eset.executeExperimentFunction('stitchTracks', frameDiff, maxDist, 'interactive', false);
+
+%Set some more ecl field values
 ecl.askFirst = false; 
 ecl.showFigsInReport = false;
 ecl.getReport(eset);
+
+%CLEAN the weird-looking tracks out of the experients again (after stitching tracks together)
 ecl.clean(eset);
+
+%Clear the experiments which have 0 tracks from the eset
 valid = true(size(eset.expt));
 for j = 1:length(eset.expt)
     if (isempty(eset.expt(j).track))
@@ -73,6 +115,9 @@ for j = 1:length(eset.expt)
     end
 end
 eset.expt = eset.expt(valid);
+
+%TRIM any points from the track which fall out of the valid time/location
+%ranges
 if (isempty(trimrect)) 
     il = eset.gatherField('iloc');
     if (isempty(buffer))
@@ -88,6 +133,13 @@ if (isempty(trimrect))
 end
 disp ('trimming tracks');
 eset.executeExperimentFunction('trimTracks', timerange, trimrect);
+if (~isempty(prunebuffer))
+    prunerect = trimrect + [prunebuffer prunebuffer -prunebuffer -prunebuffer];
+    disp ('pruning tracks');
+    eset.executeExperimentFunction('trimTracks', [], prunerect);
+end
+
+%CALCULATE derived quantities
 disp('calculating derived quantities');
 if (isa (eset.expt(1).track(1), 'MaggotTrack'))
     eset.executeTrackFunction('setSegmentSpeeds');
@@ -101,9 +153,12 @@ for j = 1:length(fieldsToDerive)
         disp(me.getReport());
     end
 end
+
+
 disp('done with loading, stitching and cleaning');
 toc(ts1)
 
+%Assign checker track data
 if (~isempty(checker_calc))
     try
         disp ('assigning checker track data');
@@ -113,6 +168,8 @@ if (~isempty(checker_calc))
     end
     toc(ts1);
 end
+
+%SAVE the eset as a matfile
 ts1 = tic;
 if (~exist(fullfile(basedir, 'matfiles'), 'dir'))
     mkdir (fullfile(basedir, 'matfiles'));

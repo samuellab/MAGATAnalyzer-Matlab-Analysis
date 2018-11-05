@@ -12,7 +12,7 @@ function [num2clean,reportstring] = getReport(ecl, eset)
 reportstring = {};
 sp = eset.gatherField('speed', 'mean');
 
-npts = eset.gatherField('npts');
+npts = eset.evaluateTrackExpression('length(track.dq.eti)');%npts = eset.gatherField('npts');
 
 nt = length(sp);
 spx = (0:(2/nt):1) * (max(sp) - min(sp)) + min(sp);

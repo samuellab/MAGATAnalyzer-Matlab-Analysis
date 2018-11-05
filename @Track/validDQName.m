@@ -10,7 +10,8 @@ function varargout = validDQName (varargin)
 
 validfieldlist = {'eti', 'iloc','sloc','vel', 'speed', 'nspeed', 'nvel', 'vnorm', 'speed_diff_local', 'theta','deltatheta', 'ddtheta', 'acc', 'curv',...
                     'pathLength','displacement','icov', 'covRatio', 'covTheta','scov', 'scovRatio', 'scovTheta', 'covMajor', 'adjspeed' ...
-                    'covMinor', 'scovMajor', 'scovMinor','iarea', 'sarea', 'totalTime', 'lrdtheta', 'dcovRatio','xloc','yloc', 'etiFromTrackStart','mapinterpedtopts'};
+                    'covMinor', 'scovMajor', 'scovMinor','iarea', 'sarea', 'totalTime', 'lrdtheta', 'dcovRatio','xloc','yloc', 'etiFromTrackStart','mapinterpedtopts',...
+                    'isrun', 'iscollision','iiscollision'};
                 
                 
 varargout{:} = Track.nameInList(validfieldlist, varargin{:});

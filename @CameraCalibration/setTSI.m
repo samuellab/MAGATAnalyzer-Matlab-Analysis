@@ -12,7 +12,9 @@ cc.realy = makecolumn(cc.realy);
 cc.r2cX = TriScatteredInterp (rx, ry, cx);
 cc.r2cY = TriScatteredInterp (rx, ry, cy);
 
-[rx, ry, cx, cy] = guessOutsideHull (cc.realx, cc.realy, cc.camx, cc.camy, [min(cc.camx) max(cc.camx)], [min(cc.camy) max(cc.camy)]);
+%1/16 - added 10 pixels to border region to take care of weird stuff from extraction, but
+%I need to check what happened during extraction
+[rx, ry, cx, cy] = guessOutsideHull (cc.realx, cc.realy, cc.camx, cc.camy, [min(cc.camx)-10 max(cc.camx)+10], [min(cc.camy)-10 max(cc.camy)+10]);
 cc.c2rX = TriScatteredInterp (cx, cy, rx);
 cc.c2rY = TriScatteredInterp (cx, cy, ry);
 %cc.c2rX = TriScatteredInterp (cc.camx, cc.camy, cc.realx);

@@ -9,6 +9,8 @@ classdef ImTrackPoint < TrackPoint
     methods
         tp = fromFile (tp, fid, loadIm, loadContour, camcalinfo)
         drawTrackImage(tp, camcalinfo, varargin)
+        im = overlayImageOnExisting (pt, imx, imy, im, camcalinfo, varargin)
+        tp = fromJava(tp, jTP, loadIm, loadContour, camcalinfo)
     end
     
     methods %constructor

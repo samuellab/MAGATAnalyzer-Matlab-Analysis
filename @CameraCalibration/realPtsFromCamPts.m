@@ -6,6 +6,10 @@ function realpts = realPtsFromCamPts(cc, campts)
 % inputs:
 %   CC < CameraCalibration
 %   CAMPTS - a 2xN list of pixel locations
+if (~isreal(campts))
+    campts = [real(campts);imag(campts)];
+end
+campts = double(campts);
 x = cc.c2rX(campts(1,:), campts(2,:));
 y = cc.c2rY(campts(1,:), campts(2,:));
 realpts = [x;y];

@@ -1,6 +1,6 @@
 function [h,eb] = makeReorientationHistogram(eset, fieldname, fieldaxis, varargin)
 % generates a plot of mean reorientation rate (in 1/minutes) vs. fieldname
-% function h = makeReorientationHistogram(eset, fieldname, fieldaxis, varargin)
+% function [h,eb] = makeReorientationHistogram(eset, fieldname, fieldaxis, varargin)
 % 
 % generates a plot of mean reorientation rate (in 1/minutes) vs. fieldname
 % if no return arguments are given, plots this 
@@ -50,7 +50,7 @@ validname = [];
 validoperation = @(x) logical(setNonFiniteToZero(x));
 r2d = false;
 polar = false;
-incllastrun = false;
+incllastrun = true; %default changed 8/7/2014 by mhg
 makePlot = false;
 turnsequence = [];
 vsDistance = false;

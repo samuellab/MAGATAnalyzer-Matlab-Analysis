@@ -11,6 +11,13 @@ function pruneTracks(expt, starttimerange, startrect)
 %STARTTIMERANGE in elapsedTime, as well as any track that starts
 %outside STARTRECT; leave STARTTIMERANGE or STARTRECT empty to disable
     
+if (length(expt) > 1)
+    for j = 1:length(expt)
+        expt(j).pruneTracks(starttimerange, startrect);
+    end
+    
+return;
+end
 starttime = transpose(expt.elapsedTime([expt.track.startFrame]+1));
 
 startloc = zeros([2 length(expt.track)]);

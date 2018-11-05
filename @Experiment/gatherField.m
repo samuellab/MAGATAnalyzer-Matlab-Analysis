@@ -20,10 +20,19 @@ function qvec = gatherField(expt, fieldname, varargin)
 %       that satisfy op(gatherField(fieldname,varargin{:})) == true
 
 validname = [];
+expandToInterped = false;
 validoperation = @(x) logical(setNonFiniteToZero(x));
 varargin = assignApplicable(varargin);
 if (any(strcmp(fieldname, fieldnames(expt.track(1)))))
-    qvec = [expt.track.(fieldname)];
+    if (expandToInterped && all(size(expt.track(1).(fieldname)) == 1))
+        qvec = [];       
+        for j = 1:length(expt.track)
+            qvec = [qvec expt.track(j).(fieldname)*ones(size(expt.track(j).getDerivedQuantity('eti', false, varargin{:})))];
+        end
+        
+    else
+        qvec = [expt.track.(fieldname)];
+    end
 else 
     qvec = [];    
     

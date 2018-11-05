@@ -70,6 +70,11 @@ function calculateDerivedQuantity(track, quantityNames, recalculate)
                 track.dq.totalTime = pt2.et - pt1.et;
             case 'mapinterpedtopts'
                 mapInterpedToPts(track); %qvec(j) is the index of [track.pt.et] closets to eti(j)
+            case {'isrun', 'iscollision'}    
+                return;
+            case {'iiscollision'}
+                calculateInterpedCollision(track);
+                
             otherwise
                 disp (['I don''t recognize the quantity: ' quantityNames{j}]);
         end%switch
@@ -78,17 +83,24 @@ end %cdq
 function calculateInterpedTime(track)    
     track.dq.eti = track.pt(1).et:track.dr.interpTime:track.pt(end).et;
 end
+% function calculateInterpedCollision(track)
+%     pt = [track.pt];
+%     et = [pt.et];
+%     ic = track.iscollision();
+%     track.dq.iiscollision = logical((interp1(et, double(ic), track.dq.eti, 'nearest', 'extrap')));
+% end
+
 
 function calculateInterpedLocation(track)
     pt = [track.pt];
     et = [pt.et];
     loc = [pt.loc];
-    track.dq.iloc = single((interp1(et, double(loc)', track.dq.eti, 'linear'))');
+    track.dq.iloc = double((interp1(et, double(loc)', track.dq.eti, 'linear'))');
 end
 
 function calculateSmoothedLocation(track)
     sigma = track.dr.smoothTime/track.dr.interpTime;
-    track.dq.sloc = single(lowpass1D(track.dq.iloc, sigma));
+    track.dq.sloc = double(lowpass1D(track.dq.iloc, sigma));
 end
 
 function caclulateVelocity(track) 
@@ -125,10 +137,10 @@ end
     
 function calculateAcceleration(track) 
     sigma = track.dr.derivTime/track.dr.interpTime;
-    track.dq.deltatheta = single (deriv(unwrap(track.dq.theta), sigma))/track.dr.interpTime;
-    track.dq.ddtheta = single (deriv(track.dq.deltatheta, sigma))/track.dr.interpTime;
-    track.dq.acc = single(deriv(track.dq.vel,sigma))/track.dr.interpTime;
-    track.dq.curv = single((track.dq.vel(1,:).*track.dq.acc(2,:) - track.dq.vel(2,:).*track.dq.acc(1,:))./(track.dq.speed.^3));
+    track.dq.deltatheta = double (deriv(unwrap(track.dq.theta), sigma))/track.dr.interpTime;
+    track.dq.ddtheta = double (deriv(track.dq.deltatheta, sigma))/track.dr.interpTime;
+    track.dq.acc = double(deriv(track.dq.vel,sigma))/track.dr.interpTime;
+    track.dq.curv = double((track.dq.vel(1,:).*track.dq.acc(2,:) - track.dq.vel(2,:).*track.dq.acc(1,:))./(track.dq.speed.^3));
 end
 
 function calculateCovariance(track) 
@@ -175,7 +187,7 @@ function calculateInterpedArea(track, qn)
         pt = [track.pt];
         et = [pt.et];
         area = [pt.area];
-        track.dq.iarea = single((interp1(et, double(area)', track.getDerivedQuantity('eti'), 'linear')));
+        track.dq.iarea = double((interp1(et, double(area)', track.getDerivedQuantity('eti'), 'linear')));
     end
 end
 

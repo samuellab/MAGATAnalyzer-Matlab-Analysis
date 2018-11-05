@@ -14,7 +14,7 @@ try
      floatType = 'float32';
 
      tp.locInFile = ftell(fid);
-     tp.ind = int16(fread(fid, 1, intType));
+     tp.ind = int32(fread(fid, 1, intType));
      tp.loc = single(readPointsFromFile (fid, 1, floatType, camcalinfo));
      tp.area = single(fread(fid, 1, floatType));
      cov = (fread(fid, 4, floatType));

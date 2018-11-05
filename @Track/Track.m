@@ -72,6 +72,10 @@ classdef Track < handle
     methods(Static)
          track = fromFile(fid, ptType, loadImageByIndex, loadContour, camcalinfo, minpts);
          varargout = validDQName (varargin);
+         track = fromJava(jTr, ptType, trInd, loadImageByIndex, loadContour, camcalinfo, minpts);
+         function track = fromMatFile(fname)
+            track = loadObjectTypeFromMatFile(fname, 'Track');
+         end
     end
     
     methods(Static, Access = protected)
@@ -101,12 +105,20 @@ classdef Track < handle
         qvec = fieldAtTime(track, quantityName, elapsedTime);
         addGlobalQuantity (track, quantityName, time, value);
         deleteMe = trim (track, timerange, validrect);
-        [ps, f] = powerSpectrum(track, quantityName, timeInterval, varargin);
+        [ps, f, peakfs] = powerSpectrum(track, quantityName, timeInterval, varargin);
         [xc, np, tx] = crosscorrelate (track, fieldname1, fieldname2, varargin);
         [ac, np, tx] = autocorrelate (track, fieldname, varargin);
         str = getReport(track, startInd, endInd, varargin);
         tf = passesThroughBox (track, rect, timeInterval, varargin);
+        function toMatFile(track, fname)
+            save(fixFileNameWin(fname), 'track');
+        end
+        
+        
+        
     end
+    
+    
     
     methods(Access = protected)
         function mo = makeMovieTrackSpecific(track, mo, pt, iind) %#ok<MANU>

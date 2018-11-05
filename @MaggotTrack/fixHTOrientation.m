@@ -34,7 +34,7 @@ speedthresh = sp2(round(length(sp2)/3));
 dpthresh = -0.5;
 
 assignApplicable(varargin);
-minpts = mintime/track.dr.interpTime;
+minpts = ceil(mintime/track.dr.interpTime);
 dp = track.getDerivedQuantity('vel_dp');
 
 inds = find(sp > speedthresh & isfinite(dp));

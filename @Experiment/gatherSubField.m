@@ -32,7 +32,10 @@ function qvec = gatherSubField (expt, field, subfield, varargin)
 expandToInds = false;
 varargin = assignApplicable(varargin);
 
-
+if (isempty(expt) || isempty(expt.track))
+    qvec = [];
+    return;
+end
 
 
 if (strcmpi (field, 'firsths'))
@@ -53,6 +56,10 @@ else
     else
         f = [expt.track.(field)];
     end
+end
+if (isempty(f))
+    qvec = [];
+    return;
 end
 qvec = [f.(subfield)];
 

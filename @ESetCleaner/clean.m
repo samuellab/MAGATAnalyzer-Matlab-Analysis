@@ -31,10 +31,12 @@ for j = 1:length(eset.expt)
         htv = ones(size(sp));
     end
     dst = eset.expt(j).evaluateTrackExpression('max(sqrt(sum(track(1).getDerivedQuantity(''displacement'').^2)))');
-    npts = eset.expt(j).gatherField('npts');
+    
+    npts = eset.expt(j).evaluateTrackExpression('length(track.dq.eti)');%eset.expt(j).gatherField('npts');
     
     pa = eset.expt(j).evaluateTrackExpression('max(abs(unwrap(track.getDerivedQuantity(''theta''))))');
     et = eset.expt(j).evaluateTrackExpression('max(track.getDerivedQuantity(''eti'')) - min(track.getDerivedQuantity(''eti''))');
+    
    % pa = pa / (2*pi);
     %et = et / 60;
     rpm = pa./et * 60 / (2*pi);

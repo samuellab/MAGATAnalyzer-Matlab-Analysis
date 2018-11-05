@@ -21,6 +21,7 @@ function plotPath(track, pathType, linetype, varargin)
 %                         e.g. 'track.getDerivedQuantity(''eti'') < 10'
 %       'highlightindsExpression' 
 Axes = [];
+plotEnds = false;
 varargin = assignApplicable (varargin);
 if (isempty(Axes))
     Axes = gca;
@@ -85,4 +86,21 @@ if (isempty(highlightinds))
     plot (Axes, x(1,inds), x(2,inds),linetype,varargin{:});
 else
     plot (Axes, x(1,inds), x(2,inds),linetype, x(1,highlightinds), x(2,highlightinds), highlightlinetype, varargin{:});
+end
+
+if (plotEnds)
+    try
+        color = linetype(1);    
+        hold on;
+        scatter(Axes, x(1,1), x(2,1), [color 'o']);                  
+        scatter(Axes, x(1,end), x(2,end), [color 'o']);
+        scatter(Axes, x(1,end), x(2,end), [color 'x']);
+        hold off;
+    catch e
+        hold on;
+        scatter(Axes, x(1,1), x(2,1), 'bo');                  
+        scatter(Axes, x(1,end), x(2,end), 'bo');
+        scatter(Axes, x(1,end), x(2,end), 'bx');
+        hold off;
+    end
 end

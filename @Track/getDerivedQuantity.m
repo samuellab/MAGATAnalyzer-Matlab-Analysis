@@ -45,6 +45,9 @@ function qvec = getDerivedQuantity(track, quantityName, recalculate, varargin)
         case 'loc'
             pt = [track.pt];
             qvec = [pt.loc];
+        case 'et'
+            pt = [track.pt];
+            qvec = [pt.et];
         case 'mapptstointerped' %qvec(j) is the index of eti closest to track.pt(j).et
             qvec = mapPtsToInterped(track);
         case 'mapptstointerpedall' %qvec is a list of all interped points that map to a given pt
@@ -56,7 +59,11 @@ function qvec = getDerivedQuantity(track, quantityName, recalculate, varargin)
             if (track.validDQName(quantityName))
                 track.calculateDerivedQuantity(quantityName, recalculate);
             end
-            qvec = track.dq.(quantityName);            
+            if (strcmpi(quantityName, 'isrun') || strcmpi(quantityName, 'iscollision'))
+                qvec = track.(quantityName);
+            else
+                qvec = track.dq.(quantityName);            
+            end
     end
     inds = 1:length(qvec);
     indsExpression = [];

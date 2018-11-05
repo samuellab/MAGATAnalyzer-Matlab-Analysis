@@ -61,6 +61,9 @@ classdef CameraCalibration < handle
         magfactor = pixelsPerRealUnit (cc); %how many pixels in a cm
         magfactor = realUnitsPerPixel (cc); %how many cm/pixel
         setTSI(cc); %set tri scattered interpolation
+        [outerrect, innerrect, quadrilateral] = realRectFromCamRect(cc, camrect); %map a camera rectangle to a real rectangle
+        [outerrect, innerrect, quadrilateral] = camRectFromRealRect(cc, realect); %map a camera rectangle to a real rectangle
+        
     end
     
     properties (SetAccess = protected)

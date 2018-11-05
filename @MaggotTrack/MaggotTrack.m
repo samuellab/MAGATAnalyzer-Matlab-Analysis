@@ -44,6 +44,14 @@ classdef MaggotTrack < Track
         plotSegmentation (track, varargin); %plots the segmented tracks run and turns with annotation
         fixHTOrientation(track, varargin); 
         prettyMovie(track, varargin); %play a pretty movie
+        
+        toMWTTrackFile (track, filestub, varargin); %writes a .blob file for 1 track
+        str = toMWTTrackString (track, varargin); %writes the appropriate string for a .blobs file
+        shapeModel = getTypicalMaggotShape(track, varargin);
+        
+        playMovie_BehaviorTriggered(track, fieldName,fieldDescription, displacementAxis, triggeredSum, triggeredInd, figTitle, varargin);
+        loadJavaMasks(track, jTr);
+        
     end
     
         

@@ -97,10 +97,13 @@ function calculateDerivedQuantity(track, quantityNames, recalculate)
                 
             case 'spineWidth'
                 track.dq.spineWidth = track.getDerivedQuantity('iarea')./track.getDerivedQuantity('spineLength');
-            case {'periAmp', 'periFreq', 'periTau'} %'periPhase', 'periMean'}
+            case {'fastTailSpeed', 'fastHeadSpeed', 'fastMidSpeed'}
+                calculateFastSpeed(track);
+            case {'periAmp', 'periFreq', 'periPhase'} %'periPhase', 'periTau', 'periMean'}
                 calculatePeristalsis(track);
             case {'spineDist'}
                 calculateSpineDist (track);
+            
             otherwise
                 disp (['I don''t recognize the quantity: ' quantityNames{j}]);
         end%switch
@@ -126,9 +129,24 @@ function calculateInterpedBody(track)
     m = [pt.mid];
     %et = [track.pt([track.pt.htValid]).et];
     %loc = [track.pt([track.pt.htValid]).(qn(2:end))];
-    track.dq.ihead = single((interp1(et, double(h'), track.dq.eti, 'linear','extrap')))';
-    track.dq.imid = single((interp1(et, double(m'), track.dq.eti, 'linear','extrap')))';
-    track.dq.itail = single((interp1(et, double(t'), track.dq.eti, 'linear','extrap')))';
+    if (length(et) < 2)
+        track.dq.ihead = NaN(2,length(track.dq.eti));
+        track.dq.imid = NaN(2,length(track.dq.eti));
+        track.dq.itail = NaN(2,length(track.dq.eti));
+        return;
+    end
+    try
+        track.dq.ihead = double((interp1(et, double(h'), track.dq.eti, 'linear','extrap')))';
+        track.dq.imid = double((interp1(et, double(m'), track.dq.eti, 'linear','extrap')))';
+        track.dq.itail = double((interp1(et, double(t'), track.dq.eti, 'linear','extrap')))';
+    catch me
+        disp (me.getReport());
+        size(et)
+        size(h)
+        track.dq.ihead = NaN(2,length(track.dq.eti));
+        track.dq.imid = NaN(2,length(track.dq.eti));
+        track.dq.itail = NaN(2,length(track.dq.eti));
+    end
    % track.dq.ihead = single((interp1(et(htv), double(h(:,htv))', track.dq.eti, 'linear')))';
    % track.dq.imid = single((interp1(et(htv), double(m(:,htv))', track.dq.eti, 'linear')))';
    % track.dq.itail = single((interp1(et(htv), double(t(:,htv))', track.dq.eti, 'linear')))';
@@ -138,13 +156,13 @@ end
 
 function calculateSmoothedBody(track,qn)
     sigma = track.dr.smoothTime/track.dr.interpTime;
-    track.dq.(qn) = single(lowpass1D(track.getDerivedQuantity(['i' qn(2:end)]), sigma));
+    track.dq.(qn) = double(lowpass1D(track.getDerivedQuantity(['i' qn(2:end)]), sigma));
 end
 
 function calculateVelocity(track, qn) 
     sigma = track.dr.derivTime/track.dr.interpTime;
     qn2 = qn; qn2(1) = 's';
-    track.dq.(qn) = single(deriv(track.getDerivedQuantity(qn2), sigma))/track.dr.interpTime; %velocity is in pixels per second
+    track.dq.(qn) = double(deriv(track.getDerivedQuantity(qn2), sigma))/track.dr.interpTime; %velocity is in pixels per second
    
 end
 function calculateSpeed(track, qn) 
@@ -158,7 +176,7 @@ function calculatePosition(track)
     pt = [track.pt];
     et = [pt.et];
     loc = [pt.mid];
-    track.dq.iloc = single((interp1(et, double(loc)', track.dq.eti, 'linear'))');
+    track.dq.iloc = double((interp1(et, double(loc)', track.dq.eti, 'linear'))');
 end
 
     
@@ -245,6 +263,7 @@ function calculateVHeadPerp(track)
     track.dq.spheadperp = sqrt(sum(vh.^2));
 end
 function calculateInterpedSpine(track)    
+    
     ncp = 11;
     pt = [track.pt];
     et = [pt.et];
@@ -253,6 +272,10 @@ function calculateInterpedSpine(track)
     et = et(htv);
     
     spine = reshape([pt.spine], 2, ncp, []);
+    valid = squeeze(all(all(isfinite(spine))));
+    spine = spine(:,:,valid);
+    et = et(valid);
+    
     sl = squeeze(cumsum(sqrt(sum(diff(spine(:,[1 1:end], :),[],2).^2,1)),2));
     for j = 1:size(spine, 3)
         while (any(diff(sl(:,j)) == 0))
@@ -263,102 +286,150 @@ function calculateInterpedSpine(track)
     spine = permute(spine,[3 1 2]);
     
     
-    try
-        ispine = interp1(et, spine, track.dq.eti,'linear','extrap');
+   % try
+        ispine = interp1(et, spine, track.dq.eti,'linear','extrap'); %use normal linear interpolation for valid spine values
+        %use nearest neighbor interpolation for invalid spine values --
+        %added by mhg 7/2/2012
+        ihtinv = ~track.getDerivedQuantity('ihtValid');
+        if (any(ihtinv))
+            ispine(ihtinv, :, :) = interp1(et, spine, track.dq.eti(ihtinv), 'nearest', 'extrap');
+        end    
         ispine = permute(ispine, [2 3 1]);
+        
+        
+        
+        
         track.dq.ispine = ispine;
-    catch
-        track
-        size(spine)
-    end
+%     catch me
+%         disp(me.getReport)
+%         track
+%         size(spine)
+%     end
 end
 function calculateSpineLength(track)
     track.dq.spineLength = squeeze(sum(sqrt(sum(diff(track.dq.ispine,[],2).^2,1)),2))';
 end
+function calculateFastSpeed(track)
+  track.calculateDerivedQuantity({'eti', 'itail', 'ihead', 'imid'});
+  tm = track.dq.imid - track.dq.itail;
+  tm = tm./repmat(sqrt(sum(tm.^2)),[2 1]);
+  %mh = track.dq.ihead - track.dq.imid;
+  %th = track.dq.ihead - track.dq.itail;
+  track.dq.fastTailSpeed = dot (deriv(track.dq.itail, 1), tm)/track.dr.interpTime;
+  track.dq.fastHeadSpeed = dot (deriv(track.dq.ihead, 1), tm)/track.dr.interpTime;
+  track.dq.fastMidSpeed = dot (deriv(track.dq.imid, 1), tm)/track.dr.interpTime;
+  
+  %sqrt(sum(deriv(track.dq.itail,1)).^2)/track.dr.interpTime;
+  %track.dq.fastHeadSpeed = sqrt(sum(deriv(track.dq.ihead,1)).^2)/track.dr.interpTime;
+  %track.dq.fastMidSpeed = sqrt(sum(deriv(track.dq.imid,1)).^2)/track.dr.interpTime;
+end
 function calculatePeristalsis(track)
 
-      %these peristalsis metrics are crude & will likely be replaced
-      %by those developed at Janelia
-      ih = track.getDerivedQuantity('ihead');
-      it = track.getDerivedQuantity('itail');
-      v = track.getDerivedQuantity('vnorm');
-%      ht = sqrt(sum((ih-it).^2));
-      th = dot(ih-it, v);
-      thl = lowpass1D(th, 1);
-      %derivative of the head tail distance along the velocity
-      dth = deriv(th, 1);
-      zcrp = find(diff(sign(dth)) > 0 & dth(1:end-1) ~= 0);
-      zcrn = find(diff(sign(dth)) < 0 & dth(1:end-1) ~= 0);
+      %tail velocity seems smoothest
+      track.calculateDerivedQuantity({'eti', 'itail'});
+      derivtime = 0.05;
+      vt = (deriv(track.dq.itail,derivtime/track.dr.interpTime))/track.dr.interpTime;
+      tm = lowpass1D(track.dq.imid - track.dq.itail, derivtime/track.dr.interpTime);
       
-      %interpolate to find zero crossing more precisely
-      d0 = dth(zcrp);
-      d1 = dth(zcrp + 1);
-      zcrpi = zcrp + d0./(d0-d1);
+      vtm = dot(vt, tm);
+%      vtm = vt;% - mean(vt);
+      vtm(vtm > percentile(vtm, 0.99)) = percentile(vtm, 0.99);
+      vtm(vtm < percentile(vtm, 0.01)) = percentile(vtm, 0.01);
+      time_window = min(track.dq.eti(end)-track.dq.eti(1), 10);
       
-      d0 = dth(zcrn);
-      d1 = dth(zcrn + 1);
-      zcrni = zcrn + d0./(d0-d1);
-      
-      ptime = interp1(track.dq.eti, zcrpi, 'linear');
-      ntime = interp1(track.dq.eti, zcrni, 'linear');
-      
-      pper = interp1(ptime, deriv(ptime, 1), track.dq.eti, 'linear', 'extrap');
-      nper = interp1(ntime, deriv(ntime, 1), track.dq.eti, 'linear', 'extrap');
-      
-      %period is space between zero crossings
-      periTau = 0.5*(pper + nper);
-      
-      if (zcrp(1) < zcrn(1))
-          zcrpi = zcrpi(2:end);
-          zcrp = zcrp(2:end);
+      %using all tail velocity, find overall best peristaltic frequency
+      Hs = spectrum.welch('Hamming', time_window/track.dr.interpTime);
+      hpsd = Hs.psd(vtm, 'Fs', 1 / track.dr.interpTime, 'NormalizedFrequency', false);
+      ps = hpsd.Data;
+      f = hpsd.Frequencies;
+      ps = ps(f > 0.5);
+      f = f(f > 0.5);
+      [~,I] = max(ps); 
+      bestfreq = f(I);
+      if (bestfreq < 1 || bestfreq > 5)
+          warning (['overall peristaltic frequency: ' num2str(bestfreq,3) ' is outside expected range']);
       end
-      zcrni = zcrni(1:length(zcrpi));
-      zcrn = zcrp(1:length(zcrp));
+      %now use autocorrelation to find local frequency
+      periodInPts = 1/(track.dr.interpTime*bestfreq);
+      minshift = floor(periodInPts * 0.8);
+      maxshift = ceil(periodInPts * 1.4);
+      winsize = periodInPts*1.5;
+      acf = autocorrInWindow(vtm, minshift, maxshift, winsize, true);
+      ssf = squareSumInWindow(vtm, minshift, maxshift, winsize, true);
+      z = 2*acf./ssf;
+      [b,I] = max(z);
+      a = interp2(z, 1:length(I), I-1, '*nearest');
+      c = interp2(z, 1:length(I), I+1, '*nearest');
+      a(isnan(a)) = b(isnan(a));
+      c(isnan(c)) = b(isnan(c));
+      I2 = I + 0.5 * (a-c)./(a-2*b+c);
+      fs = 1./(track.dr.interpTime*(minshift - 1 + I2));
+      zcut = 0.75;%percentile(b, 0.1);
+%       figure(1)
+%       pcolor (track.dq.eti, minshift:maxshift, z); shading flat; colorbar vert;
+%       figure(2)
+%       pcolor (track.dq.eti, minshift:maxshift, sort(z)); shading flat; colorbar vert;
+%       zz = sort(z, 1 , 'descend');
+%       figure(3); clf
+%       for n = 2:10
+%           plot (track.dq.eti, mean(zz(1:n,:))); hold all
+%       end
+      pv = b > zcut & (max(z) > 2*min(z));
+      if (nnz(pv) < 2)
+          pv = b > zcut; %this is a kludge -- not sure what pv, b, zcut are 10/26/2014 -- gershow
+      end
       
-      %find maximum and minimum values of smoothed and unsmoothed th near zero crossing
-      tm = interp1(track.dq.eti, 0.5*(zcrpi + zcrni), 'linear');
-      maxth = max([thl(zcrn);thl(zcrn+1);th(zcrn);th(zcrn+1)]);
-      minth = min([thl(zcrp);thl(zcrp+1);th(zcrp);th(zcrp+1)]);
+      pf = interp1(track.dq.eti(pv) + (winsize/2.0)*track.dr.interpTime, fs(pv), track.dq.eti, 'linear', 'extrap');
+      targetFreq = 1/50;
       
-      %amplitude is difference between maximum and minimum head tail
-      %distance
-      periAmp = interp1(tm, maxth-minth, track.dq.eti);
+      %stretch time to create a uniform frequency
+      dfun = @(xx,ss) targetFreq/track.dr.interpTime./interp1(pf, ss, 'linear', bestfreq);
+      nspts = bestfreq*track.dr.interpTime/targetFreq * length(pf);
+      [~,s] = ode15s(dfun, 1:(nspts*1.25), 1);
+      s = s(s < length(pf))';
       
-      sigma = median(periTau)./track.dr.interpTime;
+      %tail velocity and position semi-regularized to have a peristaltic frequency of
+      %targetFreq regardless of position
+      vti = interp1(vtm, s, 'linear', 0);
+      %tpi = interp1(track.dq.itail', s, 'linear')';
       
-      track.dq.periAmp = lowpass1D(periAmp, sigma);
-      track.dq.periTau = lowpass1D(periTau, sigma);
-      track.dq.periFreq = 1./track.dq.periTau;
+      %find period of peristaltic movement when tail is relatively still
+      tk = unique([0:(0.5/targetFreq) -(0:(0.5/targetFreq))]);
+      ck = exp(sqrt(-1)*2*pi*targetFreq*tk);
+      c = conv2(vti, ck, 'same');
+      th = angle(c);
+      %mag = abs(c);
+      [~,fi] = findPositiveZeroCrossings(th);
+      periInds = interp1(s, fi); %points in non-morphed time that mark pause point of peristalsis cycle
+      periDist = sqrt(sum(diff(interp1(track.dq.imid', periInds))'.^2));
+      periPeriod = diff(interp1(track.dq.eti, periInds));
+      periQuality = interp1(b, periInds);
+      periQuality = interp1(periQuality, 1.5:length(periQuality), 'linear');
+      periMag = interp1(interp1(abs(c), fi),1.5:length(periInds)); 
       
-%     sp = track.getDerivedQuantity('speed');
-%     inds = find(abs(diff(sign(sp - median(sp)))));
-%     T = 2*median(diff(track.dq.eti(inds)));
-%     mysine = @(x,xdata) (x(1)*sin(2*pi*x(2)*xdata + x(3))) + x(4);
-%     op = optimset('lsqcurvefit');
-%     op.Display = 'off';
-%     %x = lsqcurvefit(mysine, [mean(abs(sp)) 1/T 0 0], track.dq.eti, sp, [],[],op); 
-%     npts = ceil(T/track.dr.interpTime);
-%     x = [mean(abs(sp-median(sp))) 1/T 0 median(sp)];
-%     lb = [0 0.5/T -pi 0];
-%     ub = [max(sp) 1.5/T 3*pi max(sp)];
-%     track.dq.periAmp = zeros(size(track.dq.eti));
-%     track.dq.periFreq = zeros(size(track.dq.eti));
-%     track.dq.periPhase = zeros(size(track.dq.eti));
-%     track.dq.periMean = zeros(size(track.dq.eti));
-%     for j = 1:length(track.dq.eti)
-%         ind0 = max(j-npts, 1);
-%         ind1 = min(ind0+2*npts, length(track.dq.eti));
-%         ind0 = max(ind1 - 2*npts, 1);
-%         inds = ind0:ind1;
-%         xdata = track.dq.eti(inds) - track.dq.eti(j);
-%         ydata = sp(inds);
-%         x = lsqcurvefit(mysine, x, xdata, ydata, lb,ub,op);
-%         x(3) = mod(x(3), 2*pi);
-%         track.dq.periAmp(j) = x(1);
-%         track.dq.periFreq(j) = x(2);
-%         track.dq.periPhase(j) = x(3);
-%         track.dq.periMean(j) = x(4);
-%     end
+      
+      periTimePoint = 0.5 * (interp1(track.dq.eti, periInds(1:(end-1))) + interp1(track.dq.eti, periInds(2:end)));
+      track.dq.periAmp = interp1(periTimePoint, periDist, track.dq.eti, 'linear', 'extrap');
+      track.dq.periPeriod = interp1(periTimePoint, periPeriod, track.dq.eti, 'linear', 'extrap');
+      track.dq.periFreq = pf;
+      track.dq.periValid = pv;
+      %figure(1); clf; plot (pf, track.dq.periFreq, 'b.');
+      
+      track.dq.periPhase = interp1(s, th, 1:length(track.dq.eti));
+      track.dq.periSpeed = interp1(periTimePoint, periDist./periPeriod, track.dq.eti, 'linear', 'extrap');
+      track.dq.periQuality = b;
+%       figure(1);
+%       plot (periPeriod, periDist, 'b.');
+%       figure(2);
+%       plot (periPeriod, periQuality, 'r.');
+%       figure(3);
+%       plot (periQuality, periDist, 'g.');
+%       figure(4)
+%       plot (periPeriod(periQuality > zcut), periDist(periQuality > zcut), 'b.');
+       
+      
+      
+      
 end
 
 function calculateSpineDist (track)
@@ -394,6 +465,7 @@ function calculateSpineCurv(track)
      v = v(2:end-1,:,:);
      cv = mean((v(:,1,:).*a(:,2,:)) - (v(:,2,:).*a(:,1,:))./(sum(v.^2, 2)).^1.5);
      track.dq.spineCurv = squeeze(cv)';
+ %    track.dq.spineTheta = track.dq.spineLength.*track.dq.spineCurv;
 end
 
 function calculateSpineTheta(track)

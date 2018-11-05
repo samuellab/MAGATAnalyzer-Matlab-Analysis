@@ -15,6 +15,11 @@ function qv = getDerivedQuantity (tp, field, varargin)
 %pos = 'max' or 'maximum' -- maximum of all values
 %pos = 'maxabs' or 'minabs' -- value that is farthest or closest from 0
 %
+%'posoffset', m
+% gets the value at the index offset by m points from position
+% (just adds m to inds); m can be positive or negative
+% if posoffset causes ind to be outside track values, the inds are coerced to the nearest valid value 
+%
 %'reltpfield', rtpf
 %relative track part field:  calls tp.(rtpf).getDerivedQuantity(field,
 %varargin(:))
@@ -52,7 +57,10 @@ position = 'all';
 operation = [];
 trimpct = -1;
 trimpts = -1;
+posoffset = 0;
 varargin = assignApplicable (varargin);
+
+
 
 if (tp.startInd > tp.endInd)
 %    warning ('TP:GDQ', 'trackpart indices are out of order!');
@@ -63,6 +71,11 @@ if (tp.startInd > tp.endInd)
 end
 if (iscell(position))
     qv = tp.(position{1}).getDerivedQuantity(field, 'position', position{2});
+    return;
+end
+
+if (any(strcmp(field, fieldnames(tp.track))) && ~(strcmpi(field, 'isrun') || strcmpi(field, 'iscollision')))
+    qv = tp.track.(field);
     return;
 end
 
@@ -81,6 +94,15 @@ switch (lower(position))
             %inds = tp.startInd:tp.endInd;
         end
 end
+maxind = length(tp.track.getDerivedQuantity('eti'));
+%remove invalid indices before the offset math
+inds = inds(inds > 0 & inds <= maxind); 
+
+if (~isempty(inds))    
+    inds = inds + posoffset;
+    %inds(inds < 1) = 1;
+    %inds(inds > maxind) = maxind;
+end
 if (trimpct > 0 && trimpts > 0)
     warning('TP:QGD', 'trackpart.getDerivedQuantity: you cannot ask me to trim both by percent and by points');
 end
@@ -98,9 +120,13 @@ end
 
 if (~isempty(tp.track) && ~isempty(inds))
     tr = tp.track;
-    tr.calculateDerivedQuantity({'eti', field});
-    inds = inds(inds >= 1 & inds <= length(tp.track.dq.eti));
-    qv = tr.getDerivedQuantity(field, false, inds);
+    if (strcmpi(field, 'validinds')) 
+        qv = (inds >= 1 & inds <= length(tr.getDerivedQuantity('eti')));
+    else
+        tr.calculateDerivedQuantity({'eti', field});    
+        inds = inds(inds >= 1 & inds <= length(tp.track.dq.eti));
+        qv = tr.getDerivedQuantity(field, false, inds);
+    end
 else
 %    warning('TP:GDQ', 'trackpart.getDerivedQuantity: trackpart has no track or empty indices');
  %   tp

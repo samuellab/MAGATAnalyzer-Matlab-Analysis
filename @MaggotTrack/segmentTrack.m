@@ -1,4 +1,4 @@
-function track = segmentTrack (track, mso)
+ function track = segmentTrack (track, mso)
 %function track = segmentTrack (track, mso)
 %
 % carries out the segmentation algorithm
@@ -34,10 +34,23 @@ if (~exist('mso', 'var') || isempty(mso))
 else
     track.so = mso;
 end
+if (mso.autoset_curv_cut)
+    mso.curv_cut = mso.autoset_curv_cut_mult / median(track.getDerivedQuantity('spineLength')); %autoset_curv_cut_mult default is 5
+    track.so = mso;
+end
 
 cv = track.getDerivedQuantity('curv');
 %bt = track.getDerivedQuantity('sbodytheta');
-bt = track.getDerivedQuantity('sspineTheta');
+if (mso.smoothBodyFromPeriFreq || ~isempty(mso.smoothBodyTime))
+    if (~isempty(mso.smoothBodyTime))
+        st = mso.smoothBodyTime;
+    else
+        st = 0.2/median(track.getDerivedQuantity('periFreq'));
+    end
+    bt = lowpass1D(track.getDerivedQuantity('spineTheta'), st/track.dr.interpTime);
+else
+    bt = track.getDerivedQuantity('sspineTheta');
+end
 vdp = track.getDerivedQuantity('vel_dp');
 sp = track.getDerivedQuantity(mso.speed_field);
 
@@ -106,7 +119,7 @@ if (~isempty(track.run))
     end  
 end
 %}
-run = repmat(Run(),1);
+run = repmat(Run(),0);%changed from 1 to 0 1/19/2014 by MHG (so default is empty run); let's see what this breaks
 %record runs in track, and take some basic statistics
 for k = 1:length(start)
     run(k) = Run(track,start(k),stop(k));
@@ -122,17 +135,24 @@ track.isrun = false(size(track.dq.eti));
 track.isrun([run.inds]) = true;
 notrun = ~track.isrun;
 
+%now that we have found runs, we look for head swings
+%locate head swings;  head swings are anything where the head swings 
+buffer = ceil((track.dr.smoothTime + track.dr.derivTime)/track.dr.interpTime);
+
+
 %eliminate all headswings before the first run & after the last run
-firstrunind = find(track.isrun, 1, 'first');
-lastrunind = find(track.isrun, 1, 'last');
+firstrunind = find(track.isrun, 1, 'first') + buffer; %changed to eliminate looking for headswings at the end of the last run or the beginning of the first run 7/31
+lastrunind = find(track.isrun, 1, 'last') - buffer;
 inrange = false(size(notrun));
 inrange(firstrunind:lastrunind) = true;
 
-%now that we have found runs, we look for head swings
-%locate head swings;  head swings are anything where the head swings 
+
+
+notrun = imdilate(notrun, ones([1, buffer])); %allow head sweeps to start right at the end of runs 
+
 head_swinging = find (abs(bt) > mso.headswing_start & notrun & inrange);
 %size(track.isrun)
-isrun2 = imerode(track.isrun, [1 1 1 1 1]); %remove the ends of the run
+isrun2 = imerode(track.isrun, ones([1, buffer])); %remove the ends of the run (lets head sweeps end inside of runs) - changed to adapted time by mhg on 7/3 (instead of fixed # of points)
 not_head_swing = find((abs(bt) < mso.headswing_stop) | ([0 diff(sign(bt))] ~= 0 | isrun2) & inrange);
 
 

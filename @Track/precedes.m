@@ -6,6 +6,9 @@ function c = precedes(track1, track2, maxFrameDiff, maxDist)
 % AND the distance between the start of track2 and the end of track 1 <
 % maxDist
 %
+% if track2 is a vector, returns a bool vector indicating whether track1
+% preceds each element of track2
+%
 % outputs: 
 %   C: TRUE OR FALSE 
 % inputs:
@@ -14,6 +17,14 @@ function c = precedes(track1, track2, maxFrameDiff, maxDist)
 %       track2 for C to be true
 %   MAXDIST: maximum distance between the end of track1 & start of track 2
 %       for C to be true
+
+if (length(track2) > 1)
+    c = false(size(track2));
+    for j = 1:length(track2)
+        c(j) = precedes(track1, track2(j), maxFrameDiff, maxDist);
+    end
+    return;
+end
 
 c = (track1.pt(end).ind < track2.pt(1).ind && track1.pt(end).ind + maxFrameDiff >= track2.pt(1).ind ...
         && track1.pt(end).distance(track2.pt(1)) < maxDist);

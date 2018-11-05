@@ -1,4 +1,4 @@
-function [ps, f] = powerSpectrum(track, quantityName, timeInterval, varargin)
+function [ps, f, peakfs] = powerSpectrum(track, quantityName, timeInterval, varargin)
 % calculate the power spectrum of quantityName;
 % function [ps, f] = powerSpectrum(track, quantityName, timeInterval, varargin)
 %
@@ -9,8 +9,7 @@ function [ps, f] = powerSpectrum(track, quantityName, timeInterval, varargin)
 %   F: the frequencies at which the power spectrum is defined
 % inputs:
 %   TRACK < Track
-%   QUANTITYNAME: the name of the quantity - must be 1D; e.g.
-%       'speed' is OK, 'vel' is not
+%   QUANTITYNAME: the name of the quantity 
 %   TIMEINTERVAL: the size of the averaging window window
 %   VARARGINL: optional parameter value pairs
 %       'MeanSubtracted', true/false (if true, subtracts mean value before
@@ -31,5 +30,10 @@ for j = 1:size(x,1)
     hpsd = Hs.psd(x(j,:), 'Fs', 1 / track.dr.interpTime, 'NormalizedFrequency', false);
 
     ps(j,:) = hpsd.Data;
-    f(j,:) = hpsd.Frequencies/track.dr.interpTime;
+    f(j,:) = hpsd.Frequencies;
+    if (nargout > 2)
+        [~,fs] = hpsd.findPeaks('SORTSTR', 'descend');
+        peakfs{j} = fs;
+    end
 end
+

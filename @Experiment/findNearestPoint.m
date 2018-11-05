@@ -1,4 +1,4 @@
-function [pt, track, trackind, ptind] = findNearestPoint (expt, loc)
+function [pt, track, trackind, ptind] = findNearestPoint (expt, loc, varargin)
 %searches through all points in tracks in expt to find point(s) nearest loc
 %function [pt, track, trackind, ptind] = findNearestPoint (expt, loc)
 %
@@ -14,8 +14,17 @@ function [pt, track, trackind, ptind] = findNearestPoint (expt, loc)
 %inputs:
 %EXPT: a member of the experiment class
 %LOC: a 2xN list of points
+useTime = false;
+atTime = -1;
+varargin = assignApplicable(varargin);
 
-if (~exist ('x', 'var') || isempty (x))
+if useTime
+    [pt, track, trackind, ptind] = findNearestPointAtTime(expt, loc, atTime, varargin);
+    return;
+end
+
+
+if (~exist ('loc', 'var') || isempty (loc))
     [x,y] = getpts();   
     %use last point selected
     x = x(end);
@@ -26,8 +35,12 @@ else
 end
 
 pts = expt.gatherField('loc');
+if (atTime>0)
+    times = expt.gatherField('et');
+    pts = pts(:,logical((atTime-withinTime)<times) & logical(times<(atTime+withinTime)));
+end 
 dist = (pts(1,:)-x).^2 + (pts(2,:)-y).^2;
-[blah,I] = min(dist);
+[~,I] = min(dist);
 n = cumsum([expt.track.npts]);
 trackind = find(n >= I, 1, 'first');
 if (trackind > 1)

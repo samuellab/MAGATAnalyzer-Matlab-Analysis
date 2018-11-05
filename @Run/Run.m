@@ -29,6 +29,7 @@ classdef Run < TrackPart
         function pr = get.prevReorientation(obj)
             pr = obj.getAdjacent('prev', 'reorientation');
         end
+        
     end    
     
     %{
@@ -54,9 +55,24 @@ classdef Run < TrackPart
     end
     %}
     methods
-        calculateMetrics(run);
+        calculateMetrics(run, moveEndPosition);
         draw(run, varargin);
         str = getReport(run, varargin);
+        mhr = meanThetaRelativeTo(run, dirField);
+        function qv = getDerivedQuantity (tp, field, varargin) 
+            if (~strcmpi(field, 'meanThetaRelativeTo'))
+                qv = getDerivedQuantity@TrackPart (tp, field, varargin{:});
+                return;
+            end
+            if (isempty(tp.inds))
+                qv = [];
+                return;
+            end
+            if (isempty(varargin) || ~ischar(varargin{1}))
+                error ('meanThetaRelativeTo requires direction field name as argument');
+            end
+            qv = meanThetaRelativeTo(tp, varargin{1});
+        end
     end
     methods %constructor
         function run = Run(varargin)
@@ -69,7 +85,7 @@ classdef Run < TrackPart
                 end
                 if (nargin >= length(arglist))
                     %got everything we wanted, so calculate away
-                    run.calculateMetrics();
+                    run.calculateMetrics(true);
                 end
             end
         end

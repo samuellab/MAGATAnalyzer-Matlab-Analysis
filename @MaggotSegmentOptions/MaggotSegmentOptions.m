@@ -4,6 +4,8 @@ classdef MaggotSegmentOptions
     properties
         
         curv_cut = 0.4; %if track curvature > curv_cut, end a run
+        autoset_curv_cut = false; %if true, curvature cut is set to autoset_curv_cut_mult/body length 
+        autoset_curv_cut_mult = 5; 
         theta_cut = pi/2; %if body theta > theta_cut, end a run
         speed_field = 'speed'; %name of field that contains speed to use (normally 'speed')
         stop_speed_cut = 2; %if speed < stop_speed_cut, end a run
@@ -19,6 +21,11 @@ classdef MaggotSegmentOptions
                                        
         headswing_stop = deg2rad(10); %if body theta < headswing_stop (or changes sign), end headswing
      %   avgAngleTime = 1; %not used right now
+     
+        smoothBodyFromPeriFreq = false; %if true, we smooth the body bend angle using peristalsis frequency as a guide, rather than derivation rules
+        smoothBodyTime = []; %if not empty, we smooth the body bend angle with this time instead of using derivation rules; overrised sbfpf above
+        
+        
     end
     
     methods

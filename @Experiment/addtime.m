@@ -1,4 +1,4 @@
-function addtime(expt, timfname)
+function addtime(expt, timfname, varargin)
 %loads timing information to the file and adds it to all tracks
 %function addtime(expt, timfname)
 %experiment.addtime(timfname)
@@ -16,6 +16,10 @@ function addtime(expt, timfname)
 %was taken (ignored)
 %
 %alternately, a .mdat file with the header Mightex
+
+fixedInterpTime = [];
+varargin = assignApplicable(varargin);
+
 [ps, fn] = fileparts(expt.fname);
 existsAndDefault('timfname', fullfile(ps, [fn '.mdat']));
 try 
@@ -31,26 +35,56 @@ end
 t = [];
 ismdat = false;
 if (strcmpi (ext, '.mdat'))
-    try
-        tempstruct = importdata(timfname);
-        col = find(strcmpi(tempstruct.colheaders, 'Mightex_TimeStamp'), 1);
+    try 
+        expt.metadata = importdata2(timfname);
+        col = find(strcmpi(expt.metadata.colheaders, 'Mightex_TimeStamp'), 1);
         if (~isempty(col))
-            t = tempstruct.data(:,col);
+            t = expt.metadata.data(:,col);
             ismdat = true;
         else
-            col = find(strcmpi(tempstruct.colheaders, 'bufnum'), 1);
-            col2 = find(strcmpi(tempstruct.colheaders, 'bufnum_time'), 1);
-            tpf = diff(tempstruct.data(:,col2))./diff(tempstruct.data(:,col));
-            tpm = median(tpf(isfinite(tpf)));
-            tpm = mean(tpf(isfinite(tpf) & tpf > 0.8 * tpm & tpf < 1.2 * tpm));
-            t = (tempstruct.data(:,col)-tempstruct.data(1,col)) * tpm;
-            ismdat = true;
+            try
+                bufnum = expt.metadata.bufnum;
+                bufnum_time = expt.metadata.bufnum_time;
+                %col = find(strcmpi(tempstruct.colheaders, 'bufnum'), 1);
+                %col2 = find(strcmpi(tempstruct.colheaders, 'bufnum_time'), 1);
+                tpf = diff(bufnum_time)./diff(bufnum); %time per frame
+                tpm = median(tpf(isfinite(tpf))); %median time per frame
+                
+                tvalid = isfinite(tpf) & tpf > 0.8 * tpm & tpf < 1.2 * tpm; %reasonable times
+                bn = bufnum(tvalid);
+                bnt = bufnum_time(tvalid);
+                p = polyfit(bn - bn(1), bnt-bnt(1) , 1);
+                tpm = p(1);
+                
+%                tpm = mean(tpf(isfinite(tpf) & tpf > 0.8 * tpm & tpf < 1.2 * tpm)); %mean of resonable time per frames
+                t = (bufnum - bufnum(1)) * tpm;
+                ismdat = true;
+            catch %#ok<CTCH>
+                t = NaN;
+            end
+            
+            if (nnz(~isfinite(t)) > 0.01*length(t))
+                warning ('mdat file is corrupted - check dat file; trying to use frame added time stamp');
+                disp ('disabling advanced mdat features');
+                ismdat = false;
+                t = expt.metadata.frameAddedTimeStamp;
+%                col = find(strcmpi(tempstruct.colheaders, 'FrameNumber'), 1);
+ %               col2 = find(strcmpi(tempstruct.colheaders, 'frameAddedTimeStamp'), 1);
+  %              t = tempstruct.data(:,col2);
+                
+                if (nnz(~isfinite(t)) > 0.01*length(t))
+                    error ('mdat file is hopelessly corrupt - use dat file');
+                end
+                t = t - t(find(isfinite(t), 1, 'first'));
+            end
+            
         end
     catch %#ok<CTCH>
         timfname = fullfile(pathstr, [name '.tim']);
         ismdat = false;
+        t = [];
     end
-    if (isempty(t) || ~exist('col', 'var') || isempty(col)) 
+    if (isempty(t)) 
          timfname = fullfile(pathstr, [name '.tim']);
          t = [];
          ismdat = false;
@@ -89,13 +123,19 @@ if ~isempty(inds)
 end
 
 expt.elapsedTime = (t - t(1)) / 1000;
-dt = round(median(diff(t)))/1000; %take interpolation time to nearest ms
+if (isempty(fixedInterpTime))
+    dt = round(median(diff(t)))/1000; %take interpolation time to nearest ms
+else
+    dt = fixedInterpTime;
+end
 expt.dr.interpTime = dt;
 [expt.track.dr] = deal(expt.dr);
 indx = (1:length(t)) - 1;
 for j = 1:length(expt.track)
     expt.track(j).addTime (indx, expt.elapsedTime);
 end
+%{
+% only for very old data; will be removed soon
 
 if (exist('data', 'var') && size(data,2) > 4)
     et2 = (data(:,5) - data(2,5))/1000;
@@ -120,10 +160,15 @@ if (exist('data', 'var') && size(data,2) > 4)
     end
 end
 
+%}
+
 if (ismdat)
-    addMDatFields(expt, tempstruct, expt.elapsedTime);
+    addMetaDataFields(expt);
+%    addMDatFields(expt, tempstruct, expt.elapsedTime);
 end
 
+%this function handled metadata from projector experiments -- should be
+%moved in to addMetaDataFields, if anyone cares
 function addMDatFields(expt, datastruct, timestampbyrow)
 
 header = {'CamTargetLightLevel', 'ProjOutputValue'};

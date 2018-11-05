@@ -67,7 +67,7 @@ switch(lower(windowType))
     case 'halfgaussian'
         weightFun = @(xd,xc) exp(-4*log(2)*(xd-xc).^2./fieldwidth^2).*(sign(xd-xc) == sign(fieldwidth));
     case 'step'
-        weightFun = @(xd,xc) heaviside(fieldwidth/2 - abs(xd-xc));
+        weightFun = @(xd,xc) heavisideStep(fieldwidth/2 - abs(xd-xc));
     otherwise
         disp('windowType must be gaussian or step');
         return;

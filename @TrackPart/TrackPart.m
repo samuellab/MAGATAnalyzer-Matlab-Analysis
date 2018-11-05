@@ -16,6 +16,8 @@ classdef TrackPart < handle
     
     methods
         qvec = getDerivedQuantity (tp, field, varargin);
+        [qv, datamatrix] = averageDerivedQuantity (tp, field, centerpos, offsetinds, varargin);
+        
         playMovie (tp, varargin);
         movieOps = makeMovie(track, movieOps, varargin);
         prettyMovie (tp, varargin);

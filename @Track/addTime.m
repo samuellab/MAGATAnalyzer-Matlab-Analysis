@@ -12,12 +12,16 @@ if (isempty(elapsedTime))
     return;
 end
 
-pt = [track.pt];
-et = interp1(indx, elapsedTime, double([pt.ind]),'linear', NaN);
-pt = pt(isfinite(et));
-et = num2cell(et(isfinite(et)));
-[pt.et] = et{:};
-track.pt = pt;
-track.npts = length(track.pt);
-track.startFrame = pt(1).ind;
-track.endFrame = pt(end).ind;
+try
+    pt = [track.pt];
+    et = interp1(indx, elapsedTime, double([pt.ind]),'linear', NaN);
+    pt = pt(isfinite(et));
+    et = num2cell(et(isfinite(et)));
+    [pt.et] = et{:};
+    track.pt = pt;
+    track.npts = length(track.pt);
+    track.startFrame = pt(1).ind;
+    track.endFrame = pt(end).ind;
+catch e
+    disp(['error adding time to track ' int2str(track.locInFile)]);
+end

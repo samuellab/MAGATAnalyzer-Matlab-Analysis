@@ -34,6 +34,13 @@ if isempty(varargin)
     return;
 end
 
+if (length(expt) > 1)
+    for j = 1:length(expt)
+        expt(j).addGlobalQuantity(varargin{:});
+    end
+    return;
+end
+
 if isa(varargin{1}, 'GlobalQuantity')
     gq = varargin{1};
 else
@@ -47,6 +54,28 @@ else
     for j = 1:n
         gq.(fieldlist{j}) = varargin{j};
     end
+end
+
+if (length(gq) > 1)
+    for j = 1:length(gq)
+        expt.addGlobalQuantity(gq(j));
+    end
+    return;
+end
+
+if (isa(gq, 'GlobalLookupTable'))
+    if (isempty(expt.globalLookupTable))
+        expt.globalLookupTable = gq;
+    else
+        ind = find(strcmpi(gq.fieldname, {expt.globalLookupTable.fieldname}));
+        if (isempty(ind))    
+            expt.globalLookupTable = [expt.globalLookupTable gq];
+        else
+            expt.globalLookupTable(ind) = gq;
+        end
+    end
+   % gq.addQuantityToTrack(expt.track);
+    return;
 end
 
 if (isempty(expt.globalQuantity))

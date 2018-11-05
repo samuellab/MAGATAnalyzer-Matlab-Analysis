@@ -27,17 +27,29 @@ classdef ExperimentSet < handle
         tau = getAutocorrTau(eset, varargin);
         setAutocorrTau(eset, varargin);
         [h,eb] = makeReorientationHistogram_slidingWindow(eset, fieldname, fieldcenters, fieldwidth, windowType, varargin)
-
-
+        [qv, datamatrix] = averageFromSubField(eset, subfield, fieldname, centerpos, offsetinds, varargin); 
+        [meanPeriFreq, freqs, psd] = setDerivationRulesByPeristalsisFrequency (eset, varargin)
         
         varargout = indToTrack(eset, ind);
         toMatFiles(eset, fstub);
         addTimingByFrameDifference(eset, deltaT);
+        
+        %note that these methods will produce different results than
+        %calling same methods on each experiment individually, because the
+        %adjustment will be made globally for all experiments, instead of
+        %individually for each experiment
+        %UP TO YOU TO DECIDE MORE APPROPRIATE METHOD
+        addTemperatureAdjustedSpeed (eset, varargin); %calculates mean speed vs. temp, then creates adjusted speed to take out linear contribution
+        addAdjustedField(eset, field1, adjfield,varargin) %calculates mean adjfield vs. field1, then creates adjusted field to take out linear contribution
     end
     methods(Static)
         eset = fromFiles(varargin);
+        eset = fromMWTFiles(inputdir, camcalinfo, varargin);
         eset = fromMatFiles(fstub, fileinds,segment);
         eset = loadTrimStitchAndSave(basedir, esetname, ecl, camcalinfo, varargin);
+        [eset, success] = processDirectoryToMatfiles (basedir, varargin); %similar to load trim stitch and save
+        eset = fromJavaFiles(varargin);
+        [eset, success] = processJavaDirectoryToMatfiles (basedir,varargin);
     end
     
 end

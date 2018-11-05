@@ -12,7 +12,11 @@ function setSegmentSpeeds (track, mso)
 %       Otherwise, default to existing track.so options.  
 
 existsAndDefault('mso', track.so);
+if (mso.autoset_curv_cut)
+    mso.curv_cut = mso.autoset_curv_cut_mult / median(track.getDerivedQuantity('spineLength')); %autoset_curv_cut_mult default is 5
+end
 track.so = mso;
+
 
 % Extract all the speeds and curvatures from the track (or is it all
 % tracks?)

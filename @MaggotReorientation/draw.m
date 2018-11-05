@@ -7,6 +7,11 @@ function draw(reo, varargin)
 % optional args:
 %       none yet
 
+
+Colors.accepted = 'g-';
+Colors.rejected = 'r-';
+varargin = assignApplicable(varargin);
+
 ih = ishold;
 
 center = mean(reo.track.dq.sloc(:,reo.inds),2);
@@ -16,7 +21,7 @@ radius = max(sqrt (sum( (allpts - repmat(center,1,length(allpts))).^2)));
 t = [0:0.1:2*pi]; plot (center(1) + radius * cos(t), center(2)+radius*sin(t), 'k--'); hold on
 
 for j = 1:length(reo.headSwing)
-    reo.headSwing(j).draw();
+    reo.headSwing(j).draw('Colors', Colors);
 end
 
 if (~ih)

@@ -1,5 +1,5 @@
 function drawTrackImage (pt, camcalinfo, varargin)
-%function drawTrackImage (pt)
+%function drawTrackImage (pt, camcalinfo, varargin)
 %@MaggotTrackPoint
 %
 %passing 'pretty', 'true' opens up the following options
@@ -80,7 +80,7 @@ else
         plot (Axes, c2(1,[1:end 1]), c2(2,[1:end 1]), contourColor, 'LineWidth', contourWidth);
          
     end
-    if (drawSpine)
+    if (drawSpine && pt.htValid)
         if (~isempty(sp) && all(isfinite(sp(:))))
             plot (Axes, sp(1,:), sp(2,:), spineColor, 'MarkerSize', spineMarkerSize, 'LineWidth', spineLineWidth);
         end

@@ -1,7 +1,7 @@
 classdef TrackPoint
     properties 
         loc = single([0;0]); %location as a 2x1
-        ind = int16(0); %frame number
+        ind = int32(0); %frame number -- changed from int16 on 11/20/2014 by MHG
         area = single(0); %contour area
         cov = single ([0;0;0]); %covariance matrix, c11, c12=c21,c22
         locInFile = 0; %location in file
@@ -10,6 +10,8 @@ classdef TrackPoint
     
     methods
         tp = fromFile (tp, fid, loadIm, loadContour, camcalinfo)
+        str = toMWTBlobLine(tp, camcalinfo, varargin)
+        tp = fromJava(tp, jTP, loadIm, loadContour, camcalinfo)
     end %static methods
     methods
          dx = minus(tp2, tp1) %loc2 - loc1

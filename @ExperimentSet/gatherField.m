@@ -23,10 +23,16 @@ function qvec = gatherField(eset, fieldname, varargin)
 inds = [];
 varargin = assignApplicable(varargin);
 qvec = [];
-for j = 1:length(eset.expt)
-    qvec = [qvec eset.expt(j).gatherField(fieldname, varargin{:})];
+if (strcmpi(fieldname, 'expNum'))
+    for j = 1:length(eset.expt)
+        qv{j} = j*ones(size(eset.expt(j).gatherField('eti', varargin{:})));       
+    end    
+    qvec = [qv{:}];
+else
+    for j = 1:length(eset.expt)
+        qvec = [qvec eset.expt(j).gatherField(fieldname, varargin{:})];
+    end
 end
-
 if (~isempty(inds))
     qvec = qvec(:,inds);
 end

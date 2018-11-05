@@ -6,7 +6,6 @@ function h = plotFields (tp, xfield, yfields, varargin)
 % yfields < field(s) to plot vs. xfield
 % varargin:
 %   'Axes', axes to plot in (default gca)
-%   'makeLegend', whether to display the legend (default true)
 %   anything that can be passed to plot
 %   'ptbuffer' = 30: number of points on either side to plot
 

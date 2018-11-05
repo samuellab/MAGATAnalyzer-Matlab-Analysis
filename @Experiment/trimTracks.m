@@ -20,7 +20,17 @@ if (iscell(rval))
 else
     todelete = rval;
 end
+
 expt.track = expt.track(~todelete);
+
+if (all(todelete))
+    warning ('trim tracks deleted all tracks')
+    disp (['fname = ' expt.fname]);
+    timerange
+    validrect
+    return;
+end
+   
 minpts = (expt.track(1).dr.derivTime + expt.track(1).dr.smoothTime) / expt.track(1).dr.interpTime + 1;
 expt.track = expt.track([expt.track.npts] > minpts);
 

@@ -1,5 +1,11 @@
 function calculateMetrics(hs)
-   
+    if (length(hs) > 1)
+        for j = 1:length(hs)
+            hs(j).calculateMetrics;
+        end
+        return;
+    end
+
     hs.track.calculateDerivedQuantity({'sbodytheta', 'shead', 'stail', 'smid', 'dbodytheta'});
     btheta = hs.track.dq.sbodytheta(hs.startInd:hs.endInd);
     
@@ -35,7 +41,7 @@ function calculateMetrics(hs)
             ei = min(hs.prevRun.endInd, first - 1);
             if (ei ~= hs.prevRun.endInd)
                 hs.prevRun.endInd = ei;
-                hs.prevRun.calculateMetrics;
+                hs.prevRun.calculateMetrics(false);
             end
             hs.startInd = first;
         end
@@ -46,7 +52,9 @@ function calculateMetrics(hs)
         hs.endInd
     end
     hs.inds = hs.startInd:hs.endInd;
-    btheta = hs.track.dq.sbodytheta(hs.inds);
+   % btheta = hs.track.dq.sspineTheta(hs.inds); %changed from sbodytheta 7/2 by marc
+    btheta = hs.track.dq.spineTheta(hs.inds); %changed from sspineTheta 12/10/2013 by marc
+    
     mh = hs.track.dq.shead(:,hs.inds) - hs.track.dq.smid(:,hs.inds);
     tm = hs.track.dq.smid(:,hs.inds) - hs.track.dq.stail(:,hs.inds);
     

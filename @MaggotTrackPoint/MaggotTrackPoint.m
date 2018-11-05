@@ -17,6 +17,9 @@ classdef MaggotTrackPoint < ImTrackPoint
         tp = fromFile (tp, fid, loadIm, loadContour, camcalinfo);
         drawTrackImage(tp, camcalinfo, varargin);
         drawContourAndHead(pt, varargin);
+        str = toMWTBlobLine(tp, camcalinfo, varargin);
+        mtp2 = unCameraCalibrate (mtp, camcalinfo);
+        tp = fromJava(tp, jTP, loadIm, loadContour, camcalinfo);
     end
     
     methods
