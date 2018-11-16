@@ -77,7 +77,7 @@ yc = interp1(yaxis, cpts(2,:));
 [yc,I] = sort(yc);
 xc = xc(I);
 
-[~,c] = kmeans(diff(yc), 2, 'start', [0; max(diff(yc))]);
+[~,c] = kmeans(diff(yc)', 2, 'start', [0; max(diff(yc))]);
 height = max(c);
 
 

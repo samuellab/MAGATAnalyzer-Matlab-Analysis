@@ -1,4 +1,4 @@
-function handles = barweb_marc(barvalues, errors, width, groupnames, bw_title, bw_xlabel, bw_ylabel, bw_colormap, gridstatus, bw_legend, error_sides, legend_type)
+function handles = barweb_marc(barvalues, errors, width, groupnames, bw_title, bw_xlabel, bw_ylabel, bw_colormap, gridstatus, bw_legend, error_sides, legend_type, barx)
 
 %
 % Usage: handles = barweb(barvalues, errors, width, groupnames, bw_title, bw_xlabel, bw_ylabel, bw_colormap, gridstatus, bw_legend, error_sides, legend_type)
@@ -56,6 +56,7 @@ elseif nargin == 2
 	bw_legend = [];
 	error_sides = 2;
 	legend_type = 'plot';
+    barx = 1:size(barvalues, 1);
 elseif nargin == 3
 	groupnames = 1:size(barvalues,1);
 	bw_title = [];
@@ -66,6 +67,7 @@ elseif nargin == 3
 	bw_legend = [];
 	error_sides = 2;
 	legend_type = 'plot';
+    barx = 1:size(barvalues, 1);
 elseif nargin == 4
 	bw_title = [];
 	bw_xlabel = [];
@@ -75,6 +77,7 @@ elseif nargin == 4
 	bw_legend = [];
 	error_sides = 2;
 	legend_type = 'plot';
+    barx = 1:size(barvalues, 1);
 elseif nargin == 5
 	bw_xlabel = [];
 	bw_ylabel = [];
@@ -83,6 +86,7 @@ elseif nargin == 5
 	bw_legend = [];
 	error_sides = 2;
 	legend_type = 'plot';
+    barx = 1:size(barvalues, 1);
 elseif nargin == 6
 	bw_ylabel = [];
 	bw_colormap = jet;
@@ -90,26 +94,34 @@ elseif nargin == 6
 	bw_legend = [];
 	error_sides = 2;
 	legend_type = 'plot';
+    barx = 1:size(barvalues, 1);
 elseif nargin == 7
 	bw_colormap = jet;
 	gridstatus = 'none';
 	bw_legend = [];
 	error_sides = 2;
 	legend_type = 'plot';
+    barx = 1:size(barvalues, 1);
 elseif nargin == 8
 	gridstatus = 'none';
 	bw_legend = [];
 	error_sides = 2;
 	legend_type = 'plot';
+    barx = 1:size(barvalues, 1);
 elseif nargin == 9
 	bw_legend = [];
 	error_sides = 2;
 	legend_type = 'plot';
+    barx = 1:size(barvalues, 1);
 elseif nargin == 10
 	error_sides = 2;
 	legend_type = 'plot';
+    barx = 1:size(barvalues, 1);
 elseif nargin == 11
 	legend_type = 'plot';
+    barx = 1:size(barvalues, 1);
+elseif nargin == 12
+    barx = 1:size(barvalues, 1);
 end
 if (size(barvalues, 1) == 1)
     barvalues = [barvalues;barvalues];
@@ -117,10 +129,12 @@ if (size(barvalues, 1) == 1)
     errors = [errors;errors];
     errors(2,:) = NaN;
     onegroup = true;
+    barx = 1:2;
 else
     onegroup = false;
 end
-xdata = 1:size(barvalues, 1);
+%xdata = 1:size(barvalues, 1);
+xdata = barx;
 
 change_axis = 0;
 ymax = 0;
@@ -166,23 +180,40 @@ end
 % Plot erros
 for i = 1:numbars
     for j = 1:numgroups
-        xx =get(get(handles.bars(j,i),'children'), 'xdata');
-        x(j) = mean(xx([1 3],j));
+        xx = handles.bars(j,i).XData; %changed 3/21/2018
+        x(j) = mean(xx(:,j));
+%         xx =get(get(handles.bars(j,i),'children'), 'xdata');
+%         if (isempty(xx))
+%             continue;
+%         end
+%         x(j) = mean(xx([1 3],j));
     end
-    handles.errors(i) = errorbar(x, barvalues(:,i), errors(:,i), 'k', 'linestyle', 'none', 'LineWidth', get(gca, 'LineWidth'));
-    ymax = max([ymax; barvalues(:,i)+errors(:,i)]);
-    ymin = min([ymin; barvalues(:,i)-errors(:,i)]);
+    if (exist('x', 'var') && ~isempty(x))
+        handles.errors(i) = errorbar(x, barvalues(:,i), errors(:,i), 'k', 'linestyle', 'none', 'LineWidth', get(gca, 'LineWidth'));
+        ymax = max([ymax; barvalues(:,i)+errors(:,i)]);
+        ymin = min([ymin; barvalues(:,i)-errors(:,i)]);
+    end
+    
 end
 
 if error_sides == 1
     set(gca,'children', flipud(get(gca,'children')));
 end
-
-ylim([1.1*ymin ymax*1.1]);
+if (ymin ~= ymax)
+    ylim([1.1*ymin ymax*1.1]);
+end
 if (onegroup)
     xlim ([0.5 1.5]);
 else 
-    xlim([0.5 numgroups+0.5]);
+%     numgroups
+%     xdata(1)
+%     xdata(2)
+%     xdata(end)
+%     xdata(end-1)
+%     1.5*xdata(1)-xdata(2)
+%     xdata(end)*1.5-xdata(end-1)
+    xlim([1.5*xdata(1)-0.5*xdata(2) xdata(end)*1.5-0.5*xdata(end-1)]);
+    %xlim([0.5 numgroups+0.5]);
 end
 
 if strcmp(legend_type, 'axis')
@@ -240,12 +271,13 @@ handles.baseline = plot (get(gca, 'XLim'), [0 0], 'k-', 'LineWidth', get(gca, 'L
 
 handles.ax = gca;
 
-for j = 1:length(handles.bars)
-    xd = get(handles.bars(j), 'XData');
-    yd = get(handles.bars(j), 'YData');
-    xd = xd(isfinite(yd));
-    yd = yd(isfinite(yd));
-    set(handles.bars(j), 'XData', xd, 'YData', yd);
-end
+% bz = handles.bars(:);
+% for j = 1:length(bz)
+%     xd = get(bz(j), 'XData');
+%     yd = get(bz(j), 'YData');
+%     xd = xd(isfinite(yd));
+%     yd = yd(isfinite(yd));
+%     set(bz(j), 'XData', xd, 'YData', yd);
+% end
 
 hold off

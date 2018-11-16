@@ -82,8 +82,8 @@ if (~isempty(startTime) && ~isempty(stopTime))
 end
 pt = [track.pt];
 loc = [pt.loc];
-sloc = track.getDerivedQuantity('sloc');
-sind = track.getDerivedQuantity('mapptstointerped');
+sloc = double(track.getDerivedQuantity('sloc'));
+sind = double(track.getDerivedQuantity('mapptstointerped'));
 track.calculateDerivedQuantity({'sbodytheta', 'speed', 'vel_dp', 'dsbodytheta', 'spheadperp', 'sspineTheta'});
 
 pt = [track.pt];
@@ -166,7 +166,7 @@ for j = inds
         end
     end
     if (~isempty(t))
-        text(xl, yl, t, 'Interpreter', 'Tex', 'Parent', imax, 'FontName', 'Arial', 'FontSize', fontsize, 'HorizontalAlignment', 'Left', 'VerticalAlignment', 'Top', 'BackgroundColor', 'k');
+        text(double(xl), double(yl), t, 'Interpreter', 'Tex', 'Parent', imax, 'FontName', 'Arial', 'FontSize', fontsize, 'HorizontalAlignment', 'Left', 'VerticalAlignment', 'Top', 'BackgroundColor', 'k');
     end
     
     handles = updateCenter(handles, track, sind(j), sstart, send, dataaxes);
